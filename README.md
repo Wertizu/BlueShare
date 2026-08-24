@@ -16,18 +16,26 @@ How it works:
 1. Every device needs the app
 2. On the first screen are 2 buttons one for sending and one for Receiving the data
 
-Sending                                                                                                                  Receiving
-It will start the search automatically when clicked                                                                      It will wait for getting pinged when clicked
+## Sending
 
-At anytime you click the button again it should stop the process and return                                              You can stop the whole process and return to the Mainscreen by clicking the button again
-to the Mainscreen
-                                                                                                                         When someone pinged you and want to connect you're getting a notification
-If it finds a other device he lists it                                                                                  By pressing "yes" you accept it and by pressing "no" you decline it
+When you click **Send**, BlueShare automatically starts searching for other devices on the network.
 
-By clicking on the device you want to send to it will try to connect                                                     When connected the programm waits for getting data
+* You can click the button again at any time to stop the search and return to the main screen.
+* If another device is found, it will appear in the device list.
+* Click on the device you want to send data to. BlueShare will then try to establish a connection.
+* If the connection is successful, you can select a photo, video, or document to send.
+* The transfer progress will be displayed while the file is being sent.
+* After the transfer is complete, you can send another file or stop the connection.
 
-If the connection was succesfully you can now select your data and it will                                               As soon as the other sends something you will be notified and can also see the progress
-be sended. You can also see the progress.
-                                                                                                                         After getting the whole file you can choose where it should be saved 
-After succesfully sending the data you can send another or stop the connection                        
-                                                                                                                         Now it will wait for another File
+## Receiving
+
+When you click **Receive**, BlueShare starts waiting for another device to connect.
+
+* You can click the button again at any time to stop the process and return to the main screen.
+* When another device wants to connect, you will receive a notification asking whether you want to accept the connection.
+* Press **Yes** to accept the connection or **No** to decline it.
+* Once connected, BlueShare waits for incoming data.
+* When another device starts sending a file, you will be notified and can see the transfer progress.
+* After the transfer is complete, you can choose where to save the file.
+* BlueShare then waits for another file.
+
