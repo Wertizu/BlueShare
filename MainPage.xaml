@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="BlueShare.MainPage"
+             BackgroundColor="Black">
+
+    <Grid RowDefinitions="20, 30, 50, 50, 80, 100" ColumnDefinitions="130, 60, 100" Padding="30,0" RowSpacing="25" ColumnSpacing="20">
+
+        <Label x:Name="Main_L"
+               Text="Please Choose what to do"
+                
+               Grid.ColumnSpan="5"
+               Grid.Row="1"
+               FontSize="20"
+               />
+
+        <Label x:Name="Second_L"
+               Grid.Row="2"
+               Grid.Column="0"
+               FontSize="17"
+               Grid.ColumnSpan="3"
+               WidthRequest="300"
+               />
+
+        <Button x:Name="Button_1"
+                Grid.Row="3"
+                Grid.Column="0"
+                WidthRequest="150"
+                Text="Receive Data"
+                Clicked="ReceiveData"
+                BackgroundColor="#1769FF"
+                TextColor="White"
+                />
+
+        <Button x:Name="Button_2"
+                Grid.Row="3"
+                Grid.Column="2"
+                WidthRequest="150"
+                Text="Send Data"
+                Clicked="SearchDevices"
+                BackgroundColor="#1769FF"
+                TextColor="White"
+                />
+
+
+
+        <ScrollView x:Name ="ScrollView" Grid.Row="4" Grid.ColumnSpan="10" Padding="16"  IsVisible="False">
+            <VerticalStackLayout x:Name="Devices"
+                                 Padding="30,0"
+                                 Spacing="25">
+
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Button x:Name="Button_3"
+                        Grid.Column="1"
+                        Grid.Row="4"
+                        WidthRequest="200"
+                        HeightRequest="50"
+                        Text="Choose your data to send"
+                        Clicked="SendData"
+                        IsVisible="False"
+                        BackgroundColor="#1769FF"
+                        TextColor="White"
+                        />
+    </Grid>
+
+</ContentPage>

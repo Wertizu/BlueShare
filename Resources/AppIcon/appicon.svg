@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="90" fill="#1769FF"></rect>
+
+  <!-- WiFi signal -->
+  <g fill="none" stroke="#FFFFFF" stroke-width="32" stroke-linecap="round">
+
+    <path d="M145 175 Q256 75 367 175"></path>
+    <path d="M185 235 Q256 170 327 235"></path>
+    <path d="M220 290 Q256 255 292 290"></path>
+  </g>
+
+  <!-- File -->
+  <path d="M205 320
+       V415
+       Q205 430 220 430
+       H292
+       Q307 430 307 415
+       V350
+       L277 320
+       Z" fill="#FFFFFF"></path>
+
+  <!-- Folded corner -->
+  <path d="M277 320
+       V345
+       Q277 350 282 350
+       H307
+       Z" fill="#1769FF"></path>
+
+</svg>
