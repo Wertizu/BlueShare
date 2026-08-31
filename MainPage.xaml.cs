@@ -49,6 +49,8 @@ namespace BlueShare
                 ChangeVisibility(Button_3, false);
                 if (client.Connected) 
                 { 
+                    await stream.WriteAsync(Encoding.UTF8.GetBytes("Canceled"));
+                    await stream.FlushAsync();
                     client.Close();
                     client = new TcpClient();
                 }
@@ -345,125 +347,148 @@ namespace BlueShare
                 await writer.WriteLineAsync(message);
                 await writer.FlushAsync();
 
-                while (_connect)
+                int TokenCounter = 0;
+                while(_connect)
                 {
-                    try
+                    using (var cts = new CancellationTokenSource(5000))
                     {
-                        byte[] dataSize = new byte[8];
-                        await stream.ReadExactlyAsync(dataSize, 0, 8);
-
-                        long fileSize = BitConverter.ToInt64(dataSize, 0);
-
-                        byte[] typeLengthBytes = new byte[4];
-                        await stream.ReadExactlyAsync(typeLengthBytes, 0, 4);
-                        int typeLength = BitConverter.ToInt32(typeLengthBytes, 0);
-
-                        byte[] typeBytes = new byte[typeLength];
-                        await stream.ReadExactlyAsync(typeBytes, 0, typeLength);
-                        string dataType = Encoding.UTF8.GetString(typeBytes);
-
-                        var fileSaveResult = new CommunityToolkit.Maui.Storage.FileSaverResult(null, null);
-
-                        if (fileSize <= 2048)
+                        try
                         {
-                            using (MemoryStream memoryStream = new MemoryStream())
+                            byte[] dataSize = new byte[8];
+                            await stream.ReadExactlyAsync(dataSize, 0, 8, cts.Token);
+
+                            string canceledOperation = Encoding.UTF8.GetString(dataSize);
+
+                            if (canceledOperation == "Canceled")
                             {
-                                byte[] buffer = new byte[265 * 1024];
-                                long totalBytesReceived = 0;
-
-                                while (totalBytesReceived < fileSize)
-                                {
-                                    int bytesToRead = (int)Math.Min(buffer.Length, fileSize - totalBytesReceived);
-                                    int currentRead = await stream.ReadAsync(buffer, 0, bytesToRead);
-
-                                    if (currentRead == 0)
-                                    {
-                                        break;
-                                    }
-
-                                    await memoryStream.WriteAsync(buffer, 0, currentRead);
-                                    totalBytesReceived += currentRead;
-                                }
-
-                                memoryStream.Position = 0;
-
-                                string dataName = $"received.{dataType.Split('/')[1]}";
-
-                                fileSaveResult = await MainThread.InvokeOnMainThreadAsync(async () =>
-                                {
-                                    return await CommunityToolkit.Maui.Storage.FileSaver.Default.SaveAsync(
-                                        dataName,
-                                        memoryStream,
-                                        CancellationToken.None
-                                    );
-                                });
+                                ChangeLabelText(Second_L, "Connection was canceled by the sender");
+                                _connect = false;
+                                break;
                             }
-                        }
-                        else
-                        {
-                            string cachedir = FileSystem.CacheDirectory;
 
-                            string fileName = $"received.{dataType.Split('/')[1]}";
-                            string fullPath = Path.Combine(cachedir, fileName);
+                            long fileSize = BitConverter.ToInt64(dataSize, 0);
 
-                            try
+                            byte[] typeLengthBytes = new byte[4];
+                            await stream.ReadExactlyAsync(typeLengthBytes, 0, 4, cts.Token);
+                            int typeLength = BitConverter.ToInt32(typeLengthBytes, 0);
+
+                            byte[] typeBytes = new byte[typeLength];
+                            await stream.ReadExactlyAsync(typeBytes, 0, typeLength, cts.Token);
+                            string dataType = Encoding.UTF8.GetString(typeBytes);
+
+                            var fileSaveResult = new CommunityToolkit.Maui.Storage.FileSaverResult(null, null);
+
+                            if (fileSize <= 2048)
                             {
-                                byte[] buffer = new byte[256 * 1024];
-                                long totalBytesReceived = 0;
-
-                                await Task.Run(async () =>
+                                using (MemoryStream memoryStream = new MemoryStream())
                                 {
-                                    using (FileStream fileStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None, 256 * 1024))
-                                    using(BufferedStream bufferedStream = new BufferedStream(fileStream, 256 * 1024))
+                                    byte[] buffer = new byte[265 * 1024];
+                                    long totalBytesReceived = 0;
+
+                                    while (totalBytesReceived < fileSize)
                                     {
-                                        while (totalBytesReceived < fileSize)
+                                        int bytesToRead = (int)Math.Min(buffer.Length, fileSize - totalBytesReceived);
+                                        int currentRead = await stream.ReadAsync(buffer, 0, bytesToRead);
+
+                                        if (currentRead == 0)
                                         {
-                                            int bytesToRead = (int)Math.Min(buffer.Length, fileSize - totalBytesReceived);
-                                            int currentRead = stream.Read(buffer, 0, bytesToRead);
-                                            if (currentRead == 0) break;
-
-                                            await bufferedStream.WriteAsync(buffer, 0, currentRead);
-                                            totalBytesReceived += currentRead;
+                                            break;
                                         }
-                                    }
-                                });
 
-                                fileSaveResult = await MainThread.InvokeOnMainThreadAsync(async () =>
-                                {
-                                    using (var fileStream = File.OpenRead(fullPath))
+                                        await memoryStream.WriteAsync(buffer, 0, currentRead);
+                                        totalBytesReceived += currentRead;
+                                    }
+
+                                    memoryStream.Position = 0;
+
+                                    string dataName = $"received.{dataType.Split('/')[1]}";
+
+                                    fileSaveResult = await MainThread.InvokeOnMainThreadAsync(async () =>
                                     {
                                         return await CommunityToolkit.Maui.Storage.FileSaver.Default.SaveAsync(
-                                            fileName,
-                                            fileStream,
+                                            dataName,
+                                            memoryStream,
                                             CancellationToken.None
                                         );
-                                    }
-                                });
+                                    });
+                                }
                             }
-                            finally
+                            else
                             {
-                                if (File.Exists(fullPath)) { File.Delete(fullPath); }
+                                string cachedir = FileSystem.CacheDirectory;
+
+                                string fileName = $"received.{dataType.Split('/')[1]}";
+                                string fullPath = Path.Combine(cachedir, fileName);
+
+                                try
+                                {
+                                    byte[] buffer = new byte[256 * 1024];
+                                    long totalBytesReceived = 0;
+
+                                    await Task.Run(async () =>
+                                    {
+                                        using (FileStream fileStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None, 256 * 1024))
+                                        using (BufferedStream bufferedStream = new BufferedStream(fileStream, 256 * 1024))
+                                        {
+                                            while (totalBytesReceived < fileSize)
+                                            {
+                                                int bytesToRead = (int)Math.Min(buffer.Length, fileSize - totalBytesReceived);
+                                                int currentRead = stream.Read(buffer, 0, bytesToRead);
+                                                if (currentRead == 0) break;
+
+                                                await bufferedStream.WriteAsync(buffer, 0, currentRead);
+                                                totalBytesReceived += currentRead;
+                                            }
+                                        }
+                                    });
+
+                                    fileSaveResult = await MainThread.InvokeOnMainThreadAsync(async () =>
+                                    {
+                                        using (var fileStream = File.OpenRead(fullPath))
+                                        {
+                                            return await CommunityToolkit.Maui.Storage.FileSaver.Default.SaveAsync(
+                                                fileName,
+                                                fileStream,
+                                                CancellationToken.None
+                                            );
+                                        }
+                                    });
+                                }
+                                finally
+                                {
+                                    if (File.Exists(fullPath)) { File.Delete(fullPath); }
+                                }
+
+
                             }
 
-
+                            if (fileSaveResult.IsSuccessful)
+                            {
+                                ChangeLabelText(Second_L, "Transfer was succesfull");
+                            }
+                            else
+                            {
+                                ChangeLabelText(Second_L, "Something went wrong.");
+                                _connect = false;
+                            }
                         }
-
-                        if (fileSaveResult.IsSuccessful)
+                        catch(OperationCanceledException)
                         {
-                            ChangeLabelText(Second_L, "Transfer was succesfull");
-                        }
-                        else
-                        {
-                            ChangeLabelText(Second_L, "Something went wrong.");
-                        }
-                    }
+                            ChangeLabelText(Second_L, "Wating for data...");
+                            TokenCounter += 1;
 
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine(ex);
-                        ChangeLabelText(Second_L, "Exception while receiving data or saving data");
+                            if (TokenCounter >= 5) { _connect = false; ChangeLabelText(Second_L, "Connection stopped, after not Responding"); }
+
+                            
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine(ex);
+                            ChangeLabelText(Second_L, "Exception while receiving data or saving data");
+                        }
                     }
                 }
+                
             }
             else
             {
